@@ -52,8 +52,13 @@ INSTALLED_APPS = [
     'corsheaders'
 ]
 
-CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
-
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8080",  # ✅ your current frontend port
+    "http://127.0.0.1:8080",  # ✅ include both loopback forms
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+CORS_ALLOW_CREDENTIALS = True
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
