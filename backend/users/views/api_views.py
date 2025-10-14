@@ -1,4 +1,6 @@
 from rest_framework import generics, permissions
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from users.serializers import RegisterSerializer
@@ -22,3 +24,17 @@ class LogoutView(generics.GenericAPIView):
             return Response({"detail": "Successfully logged out."})
         except Exception:
             return Response({"error": "Invalid token or logout failed."}, status=400)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def me(request):
+    """Return the currently authenticated user's data."""
+    u = request.user
+    return Response({
+        "id": u.id,
+        "username": u.username,
+        "email": u.email,
+        "first_name": u.first_name,
+        "last_name": u.last_name,
+        "role": getattr(u, "role", "student"),
+    })
