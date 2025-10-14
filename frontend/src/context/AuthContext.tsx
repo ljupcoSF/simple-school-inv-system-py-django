@@ -1,64 +1,160 @@
-import { createContext, useEffect, useState } from "react";
-import api from "../api/axiosClient";
-import type { UserMe } from "../types/models";
+import { createContext, useState, useEffect } from "react";
+import type { ReactNode } from "react";
+import axiosClient from "../api/axiosClient.ts";
+import { useToast } from "../components/ui/use-toast.ts";
 
-type AuthCtx = {
-  user: UserMe | null;
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  role: "admin" | "student";
+  first_name?: string;
+  last_name?: string;
+}
+
+interface AuthContextType {
+  user: User | null;
   loading: boolean;
   login: (username: string, password: string) => Promise<void>;
-  register: (form: {
-    username: string; password: string; password2: string;
-    email?: string; first_name?: string; last_name?: string; role?: "student" | "admin";
-  }) => Promise<void>;
+  register: (
+    username: string,
+    email: string,
+    password: string,
+    role?: string
+  ) => Promise<void>;
   logout: () => Promise<void>;
-};
+  fetchUser: () => Promise<void>;
+}
 
-export const AuthContext = createContext<AuthCtx | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserMe | null>(null);
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  async function fetchMe() {
+  /**
+   * Fetch current authenticated user
+   */
+  const fetchUser = async () => {
     try {
-      const { data } = await api.get<UserMe>("users/me/");
-      setUser(data);
-    } catch {
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      const response = await axiosClient.get("/users/me/");
+      setUser(response.data);
+    } catch (error) {
+      console.error("Failed to fetch user:", error);
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
       setUser(null);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    if (localStorage.getItem("access")) fetchMe();
-    else setLoading(false);
+    fetchUser();
   }, []);
 
+  /**
+   * Login and store JWT tokens
+   */
   const login = async (username: string, password: string) => {
-    const { data } = await api.post("users/auth/login/", { username, password });
-    localStorage.setItem("access", data.access);
-    localStorage.setItem("refresh", data.refresh);
-    await fetchMe();
-  };
+    try {
+      const response = await axiosClient.post("/users/auth/login/", {
+        username,
+        password,
+      });
 
-  const register = async (form: any) => {
-    await api.post("users/auth/register/", form);
-  };
+      const { access, refresh } = response.data;
+      localStorage.setItem("access_token", access);
+      localStorage.setItem("refresh_token", refresh);
 
-  const logout = async () => {
-    const refresh = localStorage.getItem("refresh");
-    if (refresh) {
-      try { await api.post("users/auth/logout/", { refresh }); } catch {}
+      await fetchUser();
+
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully logged in.",
+      });
+    } catch (error: any) {
+      const message =
+        error.response?.data?.detail ||
+        "Login failed. Please check your credentials.";
+      toast({
+        title: "Login failed",
+        description: message,
+        variant: "destructive",
+      });
+      throw error;
     }
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
-    setUser(null);
+  };
+
+  /**
+   * Register new user
+   */
+  const register = async (
+    username: string,
+    email: string,
+    password: string,
+    role: string = "student"
+  ) => {
+    try {
+      await axiosClient.post("/users/auth/register/", {
+        username,
+        email,
+        password,
+        role,
+      });
+
+      toast({
+        title: "Registration successful!",
+        description: "You can now log in with your credentials.",
+      });
+    } catch (error: any) {
+      const message =
+        error.response?.data?.detail ||
+        error.response?.data?.username?.[0] ||
+        "Registration failed. Please try again.";
+      toast({
+        title: "Registration failed",
+        description: message,
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  /**
+   * Logout and clear tokens
+   */
+  const logout = async () => {
+    try {
+      await axiosClient.post("/users/auth/logout/");
+    } catch (error) {
+      console.warn("Logout request failed (ignored):", error);
+    } finally {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      setUser(null);
+
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, register, logout, fetchUser }}
+    >
       {children}
     </AuthContext.Provider>
   );
-}
+};
