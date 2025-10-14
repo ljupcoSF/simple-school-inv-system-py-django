@@ -1,3 +1,9 @@
 from django.contrib import admin
+from equipment.models import Equipment
 
-# Register your models here.
+
+@admin.register(Equipment)
+class EquipmentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'status')
+    search_fields = ('name', 'description')
+    list_filter = ('status',)
