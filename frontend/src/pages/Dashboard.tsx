@@ -1,6 +1,3 @@
-// import { useAuth } from '@/hooks/useAuth';
-// import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-// import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Package, FileText, ClipboardList, BarChart3, ArrowRight } from 'lucide-react';
 import {useAuth} from "../hooks/useAuth.ts";
@@ -30,10 +27,10 @@ const Dashboard = () => {
 
   const adminCards = [
     {
-      title: 'Equipment Catalog',
-      description: 'Manage school equipment inventory',
+      title: 'Manage Equipment',
+      description: 'Add, edit, and manage equipment inventory',
       icon: Package,
-      action: () => navigate('/equipment'),
+      action: () => navigate('/admin-equipment'),
       color: 'bg-primary',
     },
     {

@@ -1,13 +1,7 @@
-import { useState } from 'react';
-// import { Toaster } from '@/components/ui/toaster';
-// import { Toaster as Sonner } from '@/components/ui/sonner';
-// import { TooltipProvider } from '@/components/ui/tooltip';
+import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route} from 'react-router-dom';
-// import { AuthProvider } from '@/context/AuthContext';
-// import ProtectedRoute from '@/components/ProtectedRoute';
-// import Navbar from '../../../components/Navbar';
-// import Sidebar from '@/components/Sidebar';
+
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -23,6 +17,7 @@ import {AuthProvider} from "./context/AuthContext.tsx";
 import {Toaster} from "./components/ui/toaster.tsx";
 import { Toaster as Sonner } from './components/ui/sonner';
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
+import AdminEquipment from "./pages/AdminEquipment.tsx";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +67,16 @@ const App = () => {
                   <ProtectedRoute>
                     <AppLayout>
                       <EquipmentList />
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin-equipment"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AppLayout>
+                      <AdminEquipment />
                     </AppLayout>
                   </ProtectedRoute>
                 }

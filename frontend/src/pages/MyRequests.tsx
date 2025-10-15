@@ -7,6 +7,13 @@ import { Badge } from '../components/ui/badge';
 import { format } from 'date-fns';
 import { Clock, CheckCircle, XCircle, Package } from 'lucide-react';
 
+function safeFormatDate(dateString?: string | null, pattern: string = "MMM d, yyyy") {
+  if (!dateString) return "—";
+  const date = new Date(dateString);
+  return isNaN(date.getTime()) ? "—" : format(date, pattern);
+}
+
+
 interface BorrowRequest {
   id: number;
   equipment: {
@@ -152,7 +159,7 @@ const MyRequests = () => {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Badge variant="outline">{request.equipment.category}</Badge>
                       <span>•</span>
-                      <span>Requested {format(new Date(request.created_at), 'MMM d, yyyy')}</span>
+                      <span>Requested {safeFormatDate(request.created_at)}</span>
                     </div>
                   </div>
                   <Badge className={config.color}>
@@ -170,14 +177,14 @@ const MyRequests = () => {
                   <div>
                     <span className="text-muted-foreground">Expected Return: </span>
                     <span className="font-medium text-foreground">
-                      {format(new Date(request.expected_return_date), 'MMM d, yyyy')}
+                      {safeFormatDate(request.created_at)}
                     </span>
                   </div>
                   {request.actual_return_date && (
                     <div>
                       <span className="text-muted-foreground">Returned: </span>
                       <span className="font-medium text-foreground">
-                        {format(new Date(request.actual_return_date), 'MMM d, yyyy')}
+                        {safeFormatDate(request.created_at)}
                       </span>
                     </div>
                   )}
